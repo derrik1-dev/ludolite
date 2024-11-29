@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prostate Cancer Awareness - Snakes & Ladders</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<style>
+   body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.game-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
+    width: 100%;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.game-layout {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.board-container {
+    flex: 1;
+    max-width: 600px;
+}
+
+.player {
+    position: absolute;
+    width: 4%;
+    height: 4%;
+    transition: all 0.5s ease;
+    z-index: 10;
+    transform: translate(-50%, 50%); /* Center the player token */
+}
+
+/* Add specific positioning for each player to prevent overlap */
+.player1 {
+    transform: translate(-50%, 50%) translateX(-2px);
+}
+
+.player2 {
+    transform: translate(-50%, 50%) translateX(2px);
+}
+
+.game-board {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    margin-bottom: 20px;
+    background-color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#board-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.controls {
+    flex: 0 0 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+}
+
+.current-player {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.dice-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+}
+
+#dice-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.roll-button, .restart-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.roll-button:hover, .restart-button:hover {
+    background-color: #45a049;
+}
+
+.roll-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.player-info {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+}
+
+.player-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.player-input {
+    margin: 20px 0;
+}
+
+.player-input input {
+    margin: 5px;
+    padding: 5px;
+}
+
+#start-game, #true-btn, #false-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    margin: 5px;
+}
+
+#start-game:hover, #true-btn:hover, #false-btn:hover {
+    background-color: #45a049;
+}
+
+@media (max-width: 768px) {
+    .game-layout {
+        flex-direction: column;
+    }
+
+    .controls {
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    .dice-container {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+</style>
+<body>
+    <div id="game-rules-popup" class="popup">
+        <div class="popup-content">
+            <h2>Game Rules</h2>
+            <p>1. Players start off the board and must roll a 6 to begin.</p>
+            <p>2. Roll the dice to move your player.</p>
+            <p>3. If you land on a snake or ladder, you'll be asked a question.</p>
+            <p>4. Correct answers let you climb ladders or avoid snakes.</p>
+            <p>5. Incorrect answers make you slide down snakes or miss ladders.</p>
+            <p>6. First player to reach exactly 100 wins!</p>
+            <div class="player-input">
+                <input type="text" id="player1-name" placeholder="Player 1 Name">
+                <input type="text" id="player2-name" placeholder="Player 2 Name">
+            </div>
+            <button id="start-game">Start Game</button>
+        </div>
+    </div>
+
+    <div id="question-popup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <h2>Question</h2>
+            <p id="question-text"></p>
+            <button id="true-btn">True</button>
+            <button id="false-btn">False</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <h1>Prostate Cancer Awareness Game</h1>
+        <div class="game-layout">
+            <div class="board-container">
+                <div class="game-board">
+                    <img src="game.jpg" alt="Prostate Cancer Awareness Game Board" id="board-img" onerror="this.onerror=null; this.src='placeholder-board.png';">
+                    <img id="player1" class="player player1" src="player1.png" alt="Player 1">
+                    <img id="player2" class="player player2" src="player2.png" alt="Player 2">
+                </div>
+            </div>
+            <div class="controls">
+                <div class="current-player">Current Turn: <span id="current-player-name">Player 1</span></div>
+                <div class="dice-container">
+                    <img id="dice-img" src="dice1.png" alt="Dice">
+                </div>
+                <button id="roll-dice" class="roll-button">Roll Dice</button>
+                <button id="restart" class="restart-button" style="display: none;">Restart Game</button>
+            </div>
+        </div>
+        <div class="player-info">
+            <div class="player-card">
+                <img src="player1.png" alt="Player 1" class="player-avatar">
+                <span id="player1-name-display">Player 1</span>
+            </div>
+            <div class="player-card">
+                <img src="player2.png" alt="Player 2" class="player-avatar">
+                <span id="player2-name-display">Player 2</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio elements -->
+    <audio id="background-music" loop>
+        <source src="background-music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="question-sound">
+        <source src="question.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="snake-sound">
+        <source src="spill.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="ladder-sound">
+        <source src="ladder.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="dice-sound">
+        <source src="dice.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="win-sound">
+        <source src="win.mp3" type="audio/mpeg">
+    </audio>
+    <script>
+   const BOARD_SIZE = 10;
+const CELL_SIZE = 10; // percentage of board width/height
+
+// Define snakes and ladders
+const snakes = {11: 10, 48: 28, 41: 23, 64: 44, 68: 31, 88: 72, 91: 71, 94: 87, 98: 83
+};
+
+const ladders = {1: 20, 2: 19, 4: 16, 13: 35, 18: 75, 21: 39, 38: 61, 36: 54, 50: 69, 70: 90, 67: 73, 75: 96, 76: 84, 80: 82, 63: 77, 85: 100, 58: 100
+};
+
+let gameState = {
+    currentPlayer: 0,
+    players: [
+        { name: "Player 1", position: 0, element: null, hasStarted: false },
+        { name: "Player 2", position: 0, element: null, hasStarted: false }
+    ],
+    isGameOver: false,
+    isQuestionActive: false
+};
+
+// Sample questions (you can add more)
+const questions = [
+  { question: "The prostate is a small gland in men that produces seminal fluid.", answer: true },
+  { question: "Prostate cancer is most commonly diagnosed in Black men over 55 and White men over 65.", answer: true },
+  { question: "Prostate cancer can often be asymptomatic in its early stages.", answer: true },
+  { question: "PSA stands for Prostate-Specific Antigen, a protein produced by the prostate.", answer: true },
+  { question: "A PSA test measures prostate-specific antigen levels to help detect cancer.", answer: true },
+  { question: "A digital rectal exam (DRE) involves a doctor examining the prostate through the rectum.", answer: true },
+  { question: "Difficulty urinating can be a symptom of prostate cancer.", answer: true },
+  { question: "Having a family history of prostate cancer does not affect your risk.", answer: false },
+  { question: "Surgery to remove the prostate is a common treatment option.", answer: true },
+  { question: "Active surveillance involves closely monitoring prostate cancer without immediate treatment.", answer: true },
+  { question: "A diet high in red meat and dairy may increase the risk of prostate cancer.", answer: true },
+  { question: "The Gleason score grades prostate cancer based on its microscopic appearance.", answer: true },
+  { question: "Hormone therapy for prostate cancer blocks the production of hormones that fuel growth.", answer: true },
+  { question: "The most common type of prostate cancer is adenocarcinoma.", answer: true },
+  { question: "African American men have a lower risk of prostate cancer compared to other races.", answer: false },
+  { question: "Men with a positive family history of prostate cancer are at higher risk.", answer: true },
+  { question: "Men with a positive family history of breast cancer may have a higher risk of prostate cancer.", answer: true },
+  { question: "Prostate cancer screenings are recommended for men over 50.", answer: true },
+  { question: "MRI can help detect and stage prostate cancer.", answer: true },
+  { question: "A prostate biopsy involves taking small samples of prostate tissue to check for cancer.", answer: true },
+  { question: "Healthy lifestyle changes can improve quality of life for prostate cancer patients.", answer: true },
+  { question: "Cryotherapy uses cold-freeze therapy to destroy cancerous tissue in the prostate.", answer: true },
+  { question: "Some men with prostate cancer may have normal PSA levels.", answer: true },
+  { question: "Some men without prostate cancer may have high PSA levels.", answer: true },
+  { question: "Watchful waiting involves monitoring prostate cancer symptoms without active treatment.", answer: true },
+  { question: "Prostate cancer and its treatments can affect sexual function.", answer: true },
+  { question: "Obesity is linked to a higher risk of aggressive prostate cancer.", answer: false },
+  { question: "Genetic mutations like BRCA1/2 can increase prostate cancer risk.", answer: true },
+  { question: "Prostate cancer is more common in North America than other regions.", answer: true },
+  { question: "Regular exercise may help reduce prostate cancer risk.", answer: true },
+  { question: "External beam radiation uses high-energy rays to target and destroy prostate cancer cells.", answer: true },
+  { question: "Smoking is linked to an increased risk of prostate cancer progression.", answer: true },
+  { question: "Chemotherapy is used for advanced prostate cancer.", answer: true },
+  { question: "Prostatitis can cause elevated PSA levels.", answer: true },
+  { question: "BPH is a malignant tumor of the prostate.", answer: false },
+  { question: "Moderate alcohol consumption is not clearly associated with prostate cancer risk.", answer: true },
+  { question: "Managing stress can improve well-being for prostate cancer patients.", answer: true },
+  { question: "The TNM staging system classifies prostate cancer by tumor size, lymph nodes, and metastasis.", answer: true },
+  { question: "Surgery and radiation can cause erectile dysfunction in prostate cancer patients.", answer: true },
+  { question: "ADT is a treatment that increases androgen levels.", answer: false },
+  { question: "Immunotherapy helps the immune system target prostate cancer cells.", answer: true },
+  { question: "Bone pain can occur if prostate cancer spreads to the bones.", answer: true },
+  { question: "Fatigue is a common side effect of radiation therapy for prostate cancer.", answer: true },
+  { question: "A healthy diet can improve prostate cancer treatment outcomes.", answer: true },
+  { question: "Prostate cancer treatments cannot cause urinary incontinence.", answer: false },
+  { question: "A urologist specializes in diseases of the urinary tract and male reproductive organs.", answer: true },
+  { question: "Regular screening helps detect prostate cancer early.", answer: true },
+  { question: "Phytochemicals in plants may help lower prostate cancer risk.", answer: true }
+];
+
+// Calculate position coordinates
+function getPositionCoordinates(position) {
+    if (position === 0) return { x: 0, y: -10 }; // Starting position (off-board)
+    
+    position -= 1; // Convert to 0-based index
+    const row = Math.floor(position / BOARD_SIZE); // Row from bottom (0-9)
+    let col = position % BOARD_SIZE; // Column (0-9)
+    
+    // For even-numbered rows (counting from 0), reverse the column order
+    if (row % 2 === 1) {
+        col = (BOARD_SIZE - 1) - col;
+    }
+    
+    // Calculate x and y as percentages
+    // Add 5 to center in the cell (half of CELL_SIZE)
+    const x = (col * CELL_SIZE) + (CELL_SIZE / 2);
+    const y = (row * CELL_SIZE) + (CELL_SIZE / 2);
+    
+    return { x, y };
+}
+
+// Update player position on the board
+function updatePlayerPosition(playerIndex, position) {
+    const coordinates = getPositionCoordinates(position);
+    const player = gameState.players[playerIndex];
+    player.element.style.left = `${coordinates.x}%`;
+    player.element.style.bottom = `${coordinates.y}%`;
+}
+
+// Roll dice function with animation and sound
+function rollDice() {
+    return new Promise((resolve) => {
+        playSound(diceSound);
+        const diceImg = document.getElementById('dice-img');
+        let rolls = 0;
+        const maxRolls = 20;
+        const rollInterval = setInterval(() => {
+            const randomFace = Math.floor(Math.random() * 6) + 1;
+            diceImg.src = `dice${randomFace}.png`;
+            rolls++;
+            if (rolls >= maxRolls) {
+                clearInterval(rollInterval);
+                resolve(randomFace);
+            }
+        }, 50);
+    });
+}
+
+// Check for snakes or ladders
+function checkSnakesAndLadders(position) {
+    if (snakes[position]) return { type: 'snake', newPosition: snakes[position] };
+    if (ladders[position]) return { type: 'ladder', newPosition: ladders[position] };
+    return null;
+}
+
+// Show question popup with sound
+function showQuestion(callback) {
+    const questionPopup = document.getElementById('question-popup');
+    const questionText = document.getElementById('question-text');
+    const trueBtn = document.getElementById('true-btn');
+    const falseBtn = document.getElementById('false-btn');
+
+    const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+    questionText.textContent = randomQuestion.question;
+
+    questionPopup.style.display = 'flex';
+    gameState.isQuestionActive = true;
+    playSound(questionSound);
+
+    function handleAnswer(answer) {
+        questionPopup.style.display = 'none';
+        gameState.isQuestionActive = false;
+        callback(answer === randomQuestion.answer);
+    }
+
+    trueBtn.onclick = () => handleAnswer(true);
+    falseBtn.onclick = () => handleAnswer(false);
+}
+
+// Handle player turn
+async function handleTurn() {
+    if (gameState.isGameOver || gameState.isQuestionActive) return;
+    
+    const diceValue = await rollDice();
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    
+    if (!currentPlayer.hasStarted) {
+        if (diceValue === 6) {
+            currentPlayer.hasStarted = true;
+            currentPlayer.position = 1;
+            updatePlayerPosition(gameState.currentPlayer, 1);
+        } else {
+            // Player didn't roll a 6, switch to next player
+            gameState.currentPlayer = 1 - gameState.currentPlayer;
+            document.getElementById('current-player-name').textContent = gameState.players[gameState.currentPlayer].name;
+            return;
+        }
+    } else {
+        let newPosition = currentPlayer.position + diceValue;
+        
+        // Check if player won
+        if (newPosition > 100) {
+            newPosition = 100 - (newPosition - 100); // Bounce back
+        }
+        
+        if (newPosition === 100) {
+            gameState.isGameOver = true;
+            playSound(winSound);
+        }
+        
+        // Check for snakes and ladders
+        const snakeOrLadder = checkSnakesAndLadders(newPosition);
+        if (snakeOrLadder) {
+            showQuestion((correct) => {
+                if (correct) {
+                    if (snakeOrLadder.type === 'ladder') {
+                        newPosition = snakeOrLadder.newPosition;
+                        playSound(ladderSound);
+                    }
+                    // If it's a snake and the answer is correct, stay at the new position
+                } else {
+                    if (snakeOrLadder.type === 'snake') {
+                        newPosition = snakeOrLadder.newPosition;
+                        playSound(snakeSound);
+                    }
+                    // If it's a ladder and the answer is incorrect, stay at the new position
+                }
+                finalizeTurn(newPosition);
+            });
+        } else {
+            finalizeTurn(newPosition);
+        }
+    }
+}
+
+function finalizeTurn(newPosition) {
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    currentPlayer.position = newPosition;
+    updatePlayerPosition(gameState.currentPlayer, newPosition);
+    
+    // Check for win
+    if (newPosition === 100) {
+        alert(`${currentPlayer.name} wins!`);
+        document.getElementById('roll-dice').style.display = 'none';
+        document.getElementById('restart').style.display = 'inline-block';
+        backgroundMusic.pause();
+        return;
+    }
+    
+    // Switch players
+    gameState.currentPlayer = 1 - gameState.currentPlayer;
+    document.getElementById('current-player-name').textContent = gameState.players[gameState.currentPlayer].name;
+}
+
+// Reset game
+function resetGame() {
+    gameState = {
+        currentPlayer: 0,
+        players: [
+            { name: gameState.players[0].name, position: 0, element: document.getElementById('player1'), hasStarted: false },
+            { name: gameState.players[1].name, position: 0, element: document.getElementById('player2'), hasStarted: false }
+        ],
+        isGameOver: false,
+        isQuestionActive: false
+    };
+    
+    // Reset UI
+    document.getElementById('dice-img').src = 'dice1.png';
+    document.getElementById('current-player-name').textContent = gameState.players[0].name;
+    document.getElementById('roll-dice').style.display = 'inline-block';
+    document.getElementById('restart').style.display = 'none';
+    
+    // Reset player positions
+    gameState.players.forEach((player, index) => {
+        updatePlayerPosition(index, 0);
+    });
+    
+    // Restart background music
+    backgroundMusic.currentTime = 0;
+    backgroundMusic.play();
+}
+
+function initGame() {
+    const gameRulesPopup = document.getElementById('game-rules-popup');
+    const startGameBtn = document.getElementById('start-game');
+    const rollDiceBtn = document.getElementById('roll-dice');
+    
+    gameRulesPopup.style.display = 'flex';
+    rollDiceBtn.disabled = true;
+    
+    startGameBtn.addEventListener('click', startGame);
+    
+    // Initialize player elements
+    gameState.players[0].element = document.getElementById('player1');
+    gameState.players[1].element = document.getElementById('player2');
+    
+    // Add event listeners
+    rollDiceBtn.addEventListener('click', handleTurn);
+    document.getElementById('restart').addEventListener('click', resetGame);
+}
+
+function startGame() {
+    const player1Name = document.getElementById('player1-name').value || "Player 1";
+    const player2Name = document.getElementById('player2-name').value || "Player 2";
+    
+    gameState.players[0].name = player1Name;
+    gameState.players[1].name = player2Name;
+    
+    document.getElementById('current-player-name').textContent = player1Name;
+    document.getElementById('player1-name-display').textContent = player1Name;
+    document.getElementById('player2-name-display').textContent = player2Name;
+    
+    document.getElementById('game-rules-popup').style.display = 'none';
+    document.getElementById('roll-dice').disabled = false;
+    
+    // Reset player positions
+    gameState.players.forEach((player, index) => {
+        updatePlayerPosition(index, 0);
+    });
+    
+    // Reset game state
+    gameState.currentPlayer = 0;
+    gameState.isGameOver = false;
+    gameState.isQuestionActive = false;
+    
+    // Start background music
+    backgroundMusic.play();
+    
+    console.log("Game started with players:", player1Name, "and", player2Name);
+}
+
+// Audio elements
+const backgroundMusic = document.getElementById('background-music');
+const questionSound = document.getElementById('question-sound');
+const snakeSound = document.getElementById('snake-sound');
+const ladderSound = document.getElementById('ladder-sound');
+const diceSound = document.getElementById('dice-sound');
+const winSound = document.getElementById('win-sound');
+
+function playSound(audio) {
+    audio.currentTime = 0;
+    audio.play();
+}
+
+// Call initGame when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', initGame);
+
+
+    </script>
+</body>
+</html>
+
