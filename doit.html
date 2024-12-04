@@ -142,8 +142,8 @@ h1 {
 }
 
 .player-avatar {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     object-fit: contain;
 }
 
@@ -243,8 +243,8 @@ h1 {
             <div class="board-container">
                 <div class="game-board">
                     <img src="game.jpg" alt="Prostate Cancer Awareness Game Board" id="board-img" onerror="this.onerror=null; this.src='placeholder-board.png';">
-                    <img id="player1" class="player player1" src="player1.png" alt="Player 1">
-                    <img id="player2" class="player player2" src="player2.png" alt="Player 2">
+                    <img id="player1" class="player player1" src="player11.png" alt="Player 1">
+                    <img id="player2" class="player player2" src="player22.png" alt="Player 2">
                 </div>
             </div>
             <div class="controls">
@@ -258,11 +258,11 @@ h1 {
         </div>
         <div class="player-info">
             <div class="player-card">
-                <img src="player1.png" alt="Player 1" class="player-avatar">
+                <img src="player11.png" alt="Player 1" class="player-avatar">
                 <span id="player1-name-display">Player 1</span>
             </div>
             <div class="player-card">
-                <img src="player2.png" alt="Player 2" class="player-avatar">
+                <img src="player22.png" alt="Player 2" class="player-avatar">
                 <span id="player2-name-display">Player 2</span>
             </div>
         </div>
@@ -287,16 +287,15 @@ h1 {
     <audio id="win-sound">
         <source src="win.mp3" type="audio/mpeg">
     </audio>
-    <script>
-   const BOARD_SIZE = 10;
+
+<script>
+
+const BOARD_SIZE = 10;
 const CELL_SIZE = 10; // percentage of board width/height
 
 // Define snakes and ladders
-const snakes = {11: 10, 48: 28, 41: 23, 64: 44, 68: 31, 88: 72, 91: 71, 94: 87, 98: 83
-};
-
-const ladders = {1: 20, 2: 19, 4: 16, 13: 35, 18: 75, 21: 39, 38: 61, 36: 54, 50: 69, 70: 90, 67: 73, 75: 96, 76: 84, 80: 82, 63: 77, 85: 100, 58: 100
-};
+const snakes = {11: 10, 48: 28, 41: 23, 64: 44, 68: 31, 88: 72, 91: 71, 94: 87, 98: 83};
+const ladders = {1: 20, 2: 19, 4: 16, 13: 35, 18: 75, 21: 39, 38: 61, 36: 54, 50: 69, 70: 90, 67: 73, 75: 96, 76: 84, 80: 82, 63: 77, 85: 100, 58: 100};
 
 let gameState = {
     currentPlayer: 0,
@@ -310,7 +309,7 @@ let gameState = {
 
 // Sample questions (you can add more)
 const questions = [
-  { question: "The prostate is a small gland in men that produces seminal fluid.", answer: true },
+{ question: "The prostate is a small gland in men that produces seminal fluid.", answer: true },
   { question: "Prostate cancer is most commonly diagnosed in Black men over 55 and White men over 65.", answer: true },
   { question: "Prostate cancer can often be asymptomatic in its early stages.", answer: true },
   { question: "PSA stands for Prostate-Specific Antigen, a protein produced by the prostate.", answer: true },
@@ -365,16 +364,13 @@ function getPositionCoordinates(position) {
     if (position === 0) return { x: 0, y: -10 }; // Starting position (off-board)
     
     position -= 1; // Convert to 0-based index
-    const row = Math.floor(position / BOARD_SIZE); // Row from bottom (0-9)
-    let col = position % BOARD_SIZE; // Column (0-9)
+    const row = Math.floor(position / BOARD_SIZE);
+    let col = position % BOARD_SIZE;
     
-    // For even-numbered rows (counting from 0), reverse the column order
     if (row % 2 === 1) {
         col = (BOARD_SIZE - 1) - col;
     }
     
-    // Calculate x and y as percentages
-    // Add 5 to center in the cell (half of CELL_SIZE)
     const x = (col * CELL_SIZE) + (CELL_SIZE / 2);
     const y = (row * CELL_SIZE) + (CELL_SIZE / 2);
     
@@ -446,13 +442,14 @@ async function handleTurn() {
     const diceValue = await rollDice();
     const currentPlayer = gameState.players[gameState.currentPlayer];
     
+    console.log(`${currentPlayer.name} rolled a ${diceValue}`);
+    
     if (!currentPlayer.hasStarted) {
         if (diceValue === 6) {
             currentPlayer.hasStarted = true;
             currentPlayer.position = 1;
             updatePlayerPosition(gameState.currentPlayer, 1);
         } else {
-            // Player didn't roll a 6, switch to next player
             gameState.currentPlayer = 1 - gameState.currentPlayer;
             document.getElementById('current-player-name').textContent = gameState.players[gameState.currentPlayer].name;
             return;
@@ -460,32 +457,34 @@ async function handleTurn() {
     } else {
         let newPosition = currentPlayer.position + diceValue;
         
-        // Check if player won
         if (newPosition > 100) {
-            newPosition = 100 - (newPosition - 100); // Bounce back
+            newPosition = 100 - (newPosition - 100);
         }
         
         if (newPosition === 100) {
             gameState.isGameOver = true;
             playSound(winSound);
+            finalizeTurn(newPosition);
+            return;
         }
-        
-        // Check for snakes and ladders
+
+        await movePlayer(newPosition);
+
         const snakeOrLadder = checkSnakesAndLadders(newPosition);
         if (snakeOrLadder) {
+            updatePlayerPosition(gameState.currentPlayer, snakeOrLadder.newPosition);
+            
             showQuestion((correct) => {
                 if (correct) {
                     if (snakeOrLadder.type === 'ladder') {
                         newPosition = snakeOrLadder.newPosition;
                         playSound(ladderSound);
                     }
-                    // If it's a snake and the answer is correct, stay at the new position
                 } else {
                     if (snakeOrLadder.type === 'snake') {
                         newPosition = snakeOrLadder.newPosition;
                         playSound(snakeSound);
                     }
-                    // If it's a ladder and the answer is incorrect, stay at the new position
                 }
                 finalizeTurn(newPosition);
             });
@@ -495,26 +494,109 @@ async function handleTurn() {
     }
 }
 
+async function movePlayer(position) {
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    currentPlayer.position = position;
+    updatePlayerPosition(gameState.currentPlayer, position);
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+}
+
+function showWinPopup(player) {
+    const popup = document.createElement('div');
+    popup.className = 'popup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    const content = document.createElement('div');
+    content.className = 'popup-content';
+    content.style.cssText = `
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    `;
+
+    const title = document.createElement('h2');
+    title.textContent = 'Winner!';
+    title.style.cssText = `
+        font-size: 24px;
+        margin-bottom: 10px;
+    `;
+
+    const image = document.createElement('img');
+    image.src = player.element.src;
+    image.alt = `${player.name}'s avatar`;
+    image.style.cssText = `
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+    `;
+
+    const message = document.createElement('p');
+    message.textContent = `${player.name} wins the game!`;
+    message.style.cssText = `
+        font-size: 18px;
+        margin-bottom: 20px;
+    `;
+
+    const playAgainBtn = document.createElement('button');
+    playAgainBtn.textContent = 'Play Again';
+    playAgainBtn.style.cssText = `
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 5px;
+    `;
+
+    playAgainBtn.addEventListener('click', () => {
+        document.body.removeChild(popup);
+        resetGame();
+    });
+
+    content.appendChild(title);
+    content.appendChild(image);
+    content.appendChild(message);
+    content.appendChild(playAgainBtn);
+    popup.appendChild(content);
+
+    document.body.appendChild(popup);
+}
+
 function finalizeTurn(newPosition) {
     const currentPlayer = gameState.players[gameState.currentPlayer];
     currentPlayer.position = newPosition;
     updatePlayerPosition(gameState.currentPlayer, newPosition);
     
-    // Check for win
     if (newPosition === 100) {
-        alert(`${currentPlayer.name} wins!`);
-        document.getElementById('roll-dice').style.display = 'none';
-        document.getElementById('restart').style.display = 'inline-block';
-        backgroundMusic.pause();
+        gameState.isGameOver = true;
+        playSound(winSound);
+        showWinPopup(currentPlayer);
         return;
     }
     
-    // Switch players
     gameState.currentPlayer = 1 - gameState.currentPlayer;
     document.getElementById('current-player-name').textContent = gameState.players[gameState.currentPlayer].name;
 }
 
-// Reset game
 function resetGame() {
     gameState = {
         currentPlayer: 0,
@@ -526,18 +608,15 @@ function resetGame() {
         isQuestionActive: false
     };
     
-    // Reset UI
     document.getElementById('dice-img').src = 'dice1.png';
     document.getElementById('current-player-name').textContent = gameState.players[0].name;
     document.getElementById('roll-dice').style.display = 'inline-block';
     document.getElementById('restart').style.display = 'none';
     
-    // Reset player positions
     gameState.players.forEach((player, index) => {
         updatePlayerPosition(index, 0);
     });
     
-    // Restart background music
     backgroundMusic.currentTime = 0;
     backgroundMusic.play();
 }
@@ -552,11 +631,9 @@ function initGame() {
     
     startGameBtn.addEventListener('click', startGame);
     
-    // Initialize player elements
     gameState.players[0].element = document.getElementById('player1');
     gameState.players[1].element = document.getElementById('player2');
     
-    // Add event listeners
     rollDiceBtn.addEventListener('click', handleTurn);
     document.getElementById('restart').addEventListener('click', resetGame);
 }
@@ -575,17 +652,16 @@ function startGame() {
     document.getElementById('game-rules-popup').style.display = 'none';
     document.getElementById('roll-dice').disabled = false;
     
-    // Reset player positions
     gameState.players.forEach((player, index) => {
+        player.position = 0;
+        player.hasStarted = false;
         updatePlayerPosition(index, 0);
     });
     
-    // Reset game state
     gameState.currentPlayer = 0;
     gameState.isGameOver = false;
     gameState.isQuestionActive = false;
     
-    // Start background music
     backgroundMusic.play();
     
     console.log("Game started with players:", player1Name, "and", player2Name);
@@ -604,9 +680,7 @@ function playSound(audio) {
     audio.play();
 }
 
-// Call initGame when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', initGame);
-
 
     </script>
 </body>
